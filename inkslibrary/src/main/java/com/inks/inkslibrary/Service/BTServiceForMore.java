@@ -55,6 +55,7 @@ public class BTServiceForMore extends Service {
     private String nowReconnectionMac = "";
 
 
+
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         @Override
@@ -122,6 +123,8 @@ public class BTServiceForMore extends Service {
                 for (int i = 0; i < btArrayList.size(); i++) {
                     if (btArrayList.get(i).getMac().equals(gatt.getDevice().getAddress())) {
                         btArrayList.get(i).setState(0);
+                        btArrayList.get(i).getGatt().disconnect();
+                        btArrayList.get(i).getGatt().close();
                         btArrayList.get(i).setGatt(null);
                         btArrayList.remove(i);
                         break;
@@ -438,14 +441,15 @@ public class BTServiceForMore extends Service {
         // close();
         return super.onUnbind(intent);
     }
-
     public void close(String mac) {
+        handler.removeMessages(100);
+        nowReconnection = 0;
         for (int i = 0; i < btArrayList.size(); i++) {
             if (btArrayList.get(i).getMac().equals(mac)) {
                 if (btArrayList.get(i).getGatt() != null) {
                     btArrayList.get(i).getGatt().close();
                 }
-                btArrayList.get(i).setGatt(null);
+                // btArrayList.get(i).setGatt(null);
                 btArrayList.remove(i);
                 break;
             }
@@ -453,11 +457,13 @@ public class BTServiceForMore extends Service {
     }
 
     public void closeAll() {
+        handler.removeMessages(100);
+        nowReconnection = 0;
         for (int i = 0; i < btArrayList.size(); i++) {
             if (btArrayList.get(i).getGatt() != null) {
                 btArrayList.get(i).getGatt().close();
             }
-            btArrayList.get(i).setGatt(null);
+            // btArrayList.get(i).setGatt(null);
         }
         btArrayList.clear();
     }
@@ -465,9 +471,12 @@ public class BTServiceForMore extends Service {
 
     @SuppressLint("MissingPermission")
     public boolean disconnect(String mac) {
+
         if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_OFF) {
             return false;
         } else {
+            handler.removeMessages(100);
+            nowReconnection = 0;
             for (int i = 0; i < btArrayList.size(); i++) {
                 if (btArrayList.get(i).getMac().equals(mac)) {
                     if (mBluetoothAdapter == null || btArrayList.get(i).getGatt() == null) {
@@ -479,10 +488,7 @@ public class BTServiceForMore extends Service {
                     break;
                 }
             }
-
-
             return true;
-
         }
     }
 
