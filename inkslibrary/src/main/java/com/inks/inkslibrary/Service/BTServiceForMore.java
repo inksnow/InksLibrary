@@ -61,7 +61,7 @@ public class BTServiceForMore extends Service {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
-            L.e("onConnectionStateChange"+"   status:"+status+"    newState:"+newState);
+            L.e("onConnectionStateChange"+gatt.getDevice().getAddress()+"   status:"+status+"    newState:"+newState);
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 nowReconnection = 0;
                 nowReconnectionMac="";
@@ -91,11 +91,21 @@ public class BTServiceForMore extends Service {
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
 
-                if(status==133){
-                    //133  重连
-                    if(nowReconnection<maxReconnection){
+                if(status!=0){
+                    //  重连
+                    boolean stateFlag = false;//是否正在重连
+                    for (int i = 0; i < btArrayList.size(); i++) {
+                        if (btArrayList.get(i).getMac().equals(gatt.getDevice().getAddress())) {
+                            if(btArrayList.get(i).getState()==2){
+                                //正在连接中，重连
+                                stateFlag = true;
+                                break;
+                            }
+                        }
+                    }
+                    if((nowReconnection<maxReconnection) && stateFlag){
                         nowReconnection ++;
-                        L.e("第"+nowReconnection+"次重连");
+                        L.e("onConnectionStateChange第"+nowReconnection+"次重连"+gatt.getDevice().getAddress());
                         nowReconnectionMac = gatt.getDevice().getAddress();
                         L.e(gatt.getDevice().getName()+"    "+nowReconnectionMac);
                         gatt.close();
@@ -114,12 +124,10 @@ public class BTServiceForMore extends Service {
                         //连接超过3次
                         nowReconnection = 0;
                         nowReconnectionMac="";
-                        L.e("超过3次");
+                        L.e("onConnectionStateChange超过3次或不需要重连"+gatt.getDevice().getAddress());
                     }
-
                 }
                 intentAction = ACTION_GATT_DISCONNECTED;
-
                 for (int i = 0; i < btArrayList.size(); i++) {
                     if (btArrayList.get(i).getMac().equals(gatt.getDevice().getAddress())) {
                         btArrayList.get(i).setState(0);
@@ -133,8 +141,6 @@ public class BTServiceForMore extends Service {
                 L.e("连接失败");
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intentAction, gatt.getDevice().getAddress(), gatt.getDevice().getName());
-
-
             }
         }
 
@@ -354,9 +360,16 @@ public class BTServiceForMore extends Service {
                     Log.w(TAG, "BluetoothAdapter not initialized");
                     return;
                 }
-                btArrayList.get(i).getWriteCharacteristic().setValue(bytes);
-                boolean flag = btArrayList.get(i).getGatt().writeCharacteristic(btArrayList.get(i).getWriteCharacteristic());
-                Log.e(TAG, "           send flag:  " + flag);
+                boolean flag = false;
+                try{
+                    btArrayList.get(i).getWriteCharacteristic().setValue(bytes);
+                    flag = btArrayList.get(i).getGatt().writeCharacteristic(btArrayList.get(i).getWriteCharacteristic());
+                    Log.e(TAG, "           send flag:  " + flag);
+                }catch (Exception e){
+                    L.e("writeCharacteristic失败");
+                    L.e(e.toString());
+                }
+
                 if (!flag) {
                     Log.e(TAG, "send flag:" + flag);
                 }
@@ -372,9 +385,15 @@ public class BTServiceForMore extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        characteristic.setValue(bytes);
-        boolean flag = gatt.writeCharacteristic(characteristic);
-        Log.e(TAG, "           send flag:  " + flag);
+        boolean flag = false;
+        try {
+            characteristic.setValue(bytes);
+            flag = gatt.writeCharacteristic(characteristic);
+            Log.e(TAG, "           send flag:  " + flag);
+        }catch (Exception e){
+            L.e("writeCharacteristic失败");
+            L.e(e.toString());
+        }
         if (!flag) {
             Log.e(TAG, "send flag:" + flag);
         }
@@ -387,16 +406,24 @@ public class BTServiceForMore extends Service {
                     Log.w(TAG, "BluetoothAdapter not initialized");
                     return;
                 }
-                L.e(btArrayList.get(i).getMac() + "_发送：" + StringAndByteUtils.bytesToHexString(bytes));
-                btArrayList.get(i).getWriteCharacteristic().setValue(bytes);
-                boolean flag = btArrayList.get(i).getGatt().writeCharacteristic(btArrayList.get(i).getWriteCharacteristic());
-                Log.e(TAG, "           send flag:  " + flag);
+                boolean flag = false;
+                try{
+                    L.e(btArrayList.get(i).getMac() + "_发送：" + StringAndByteUtils.bytesToHexString(bytes));
+                    btArrayList.get(i).getWriteCharacteristic().setValue(bytes);
+                    flag = btArrayList.get(i).getGatt().writeCharacteristic(btArrayList.get(i).getWriteCharacteristic());
+                    Log.e(TAG, "           send flag:  " + flag);
+
+                }catch (Exception e){
+                    L.e("writeCharacteristic失败");
+                    L.e(e.toString());
+                }
                 if (!flag) {
                     Log.e(TAG, "send flag:" + flag);
                 }
             }
         }
     }
+
 
     public ArrayList<String> getLinkBt() {
         ArrayList<String> linkBt = new ArrayList<>();
@@ -442,6 +469,11 @@ public class BTServiceForMore extends Service {
         // close();
         return super.onUnbind(intent);
     }
+
+    public void removeHandler(){
+        handler.removeMessages(100);
+    }
+
     public void close(String mac) {
         handler.removeMessages(100);
         nowReconnection = 0;
