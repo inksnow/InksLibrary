@@ -13,4 +13,23 @@
 <item name="android:activityCloseExitAnimation">@anim/popup_miss</item>
 </style>
 
+
+    <style name="popup_fade_in_out">
+        <item name="android:windowEnterAnimation">@anim/popup_out</item>
+        <item name="android:windowExitAnimation">@anim/popup_miss</item>
+    </style>
+
+    <style name="popup_top_down">
+        <item name="android:windowEnterAnimation">@anim/anim_top_down_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_top_down_out</item>
+    </style>
+
+    <style name="popup_bottom_top">
+        <item name="android:windowEnterAnimation">@anim/anim_bottom_top_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_bottom_top_out</item>
+    </style>
+    <style name="popup_left_right">
+        <item name="android:windowEnterAnimation">@anim/anim_left_right_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_left_right_out</item>
+    </style>
     </resources>

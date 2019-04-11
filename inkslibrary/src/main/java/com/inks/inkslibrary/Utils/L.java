@@ -93,7 +93,6 @@ public class L {
             try {
                 Activity activity = (Activity)context;
                 Log.e(activity.getComponentName().getClassName(), msg);
-
             } catch (Exception e) {
                 e.printStackTrace();
                 //说明是ApplicationContext

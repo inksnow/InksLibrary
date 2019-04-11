@@ -24,6 +24,7 @@ import android.support.v4.content.FileProvider;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -94,6 +95,7 @@ public class LibUpActivity extends Activity {
         initView();
         setViewStyle();
         setViewData();
+
     }
 
     private void initView() {
